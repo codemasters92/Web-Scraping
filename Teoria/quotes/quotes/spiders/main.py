@@ -11,7 +11,7 @@
 
 #     def parse(self, response):
 #         quote = response.css('div.quote')
-        
+
 #         text = quote.css('span.text::text').get()
 #         author = quote.css('span small::text').get()
 #         tags = quote.css('div.tags a.tag::text').getall()
@@ -21,6 +21,7 @@
 #             'author': author,
 #             'tags': tags
 #         }
+
 
 #* ==== 1.2° Scraping em 2 nivel (duas paginas dentro do mesmo site).
 # import scrapy
@@ -55,72 +56,58 @@
 #             'description' : description
 #         }
 
+
 #? === 2° Segunda resolução ===
 #* ====2.1° Scraping em 1 nivel. 
-# import scrapy
+# import scrapy 
 
-# class QuoteData(scrapy.Item):
-# 	quote = scrapy.Field()
-# 	author = scrapy.Field()
-# 	tags = scrapy.Field()
-
-# class QuoteDataSpider(scrapy.Spider):
-# 	name = "main"
-
-# 	start_urls = ['http://quotes.toscrape.com/random']
-
-# 	def parse(self, response):
-
-# 		quoteData = QuoteData()
-# 		quoteBlocks = response.css('div.quote')
-		
-# 		quoteData['quote'] = quoteBlocks.css('span.text::text').get()
-# 		quoteData['author'] = quoteBlocks.css('span small::text').get()
-# 		quoteData['tags'] = quoteBlocks.css('div.tags a.tag::text').getall()
-# 		yield quoteData	
-
-#* ====2.2° Scraping em 2 nivel (duas paginas dentro do mesmo site).
-
-# import scrapy
-
-# class QuoteData(scrapy.Item):
-#     quote = scrapy.Field()
+# class QuotesItem(scrapy.Item):
+#     text = scrapy.Field()
 #     author = scrapy.Field()
 #     tags = scrapy.Field()
-#     author_born_date = scrapy.Field()
-#     description = scrapy.Field()
 
-# class QuotesSpider(scrapy.Spider):
-#     name = 'quotes'
-
+# class QuotesScrapy(scrapy.Spider):
+#     name = 'main'
 #     start_urls = ['http://quotes.toscrape.com/random']
 
 #     def parse(self, response):
-#         quote = response.css('div.quote')
-        
-#         text = quote.css('span.text::text').get()
-#         author = quote.css('span small::text').get()
-#         tags = quote.css('div.tags a.tag::text').getall()
-#         link = quote.xpath('.//small[@class="author"]/../a/@href').get()
+#         item = QuotesItem()
 
-#         yield scrapy.Request(f'https://quotes.toscrape.com{link}', dont_filter=True, callback=self.parse_total, cb_kwargs={
-#             'text': text,
-#             'author': author,
-#             'tags': tags
-#         })
+#         self.item['text'] = response.xpath('//span[@class="text"]/text()').get()
+#         self.item['author'] = response.xpath('//small[@class="author"]/text()').get()
+#         self.item['tags'] = response.xpath('//div[@class="tags"]/a/text()').getall()
+#         yield self.item
 
-#     def parse_total(self, response, text, author, tags):
-#         author_born_date = response.xpath('//span[@class="author-born-date"]/text()').get()
-#         description = response.xpath('//div[@class="author-description"]/text()').get().strip()
+#* ====2.2° Scraping em 2 nivel (duas paginas dentro do mesmo site).
+# import scrapy 
 
-#         quoteData = QuoteData()
-#         quoteData['quote'] = text
-#         quoteData['author'] = author
-#         quoteData['tags'] = tags
-#         quoteData['author_born_date'] = author_born_date
-#         quoteData['description'] = description
+# class QuotesItem(scrapy.Item):
+#     text = scrapy.Field()
+#     author = scrapy.Field()
+#     tags = scrapy.Field()
+#     born_date = scrapy.Field()
+#     born_location = scrapy.Field()
+#     author_description = scrapy.Field()
 
-#         yield quoteData
+# class QuotesScrapy(scrapy.Spider):
+#     name = 'main'
+#     start_urls = ['http://quotes.toscrape.com/random']
+
+#     def parse(self, response):
+#         item = QuotesItem()
+
+#         item['text'] = response.xpath('//span[@class="text"]/text()').get()
+#         item['author'] = response.xpath('//small[@class="author"]/text()').get()
+#         item['tags'] = response.xpath('//div[@class="tags"]/a/text()').getall()
+#         link = response.xpath('//small/../a/@href').get()
+
+#         yield scrapy.Request(f'http://quotes.toscrape.com/{link}', callback= self.parse_total, cb_kwargs= {'item' : item})
+
+#     def parse_total(self, response, item):
+#         item['born_date'] = response.xpath('//span[@class="author-born-date"]/text()').get()
+#         item['born_location'] = response.xpath('//span[@class="author-born-location"]/text()').get()
+#         item['author_description'] = response.xpath('//div[@class="author-description"]/text()').get().strip()
+#         yield item
 
 
 #TODO === 2° - Default Quotes ===
@@ -131,7 +118,7 @@
 #? === 1° Primeira resolução ===
 #* ====1.1° Scraping em 1 nivel. 
 # import scrapy
-# from colorama import Fore, Back, Style
+
 
 # class Quotes(scrapy.Spider):
 #     name = 'main' # Nome do spider
@@ -214,6 +201,7 @@
 #                 'autor' : autor,
 #                 'tags' : tags 
 #             }
+
 #* ====2.2° Scraping em 2 nivel (duas paginas dentro do mesmo site).
 
 # import scrapy
@@ -268,10 +256,10 @@
 
 # 	def parse(self, response):
 
-# 		quoteData = QuoteData()
 # 		quoteBlocks = response.css('div.quote')
 		
 # 		for block in quoteBlocks:
+# 			quoteData = QuoteData()
 # 			quoteData['quote'] = block.css('span.text::text').extract_first()
 # 			quoteData['author'] = block.css('span small::text').extract_first()
 # 			quoteData['tags'] = block.css('div.tags a.tag::text').extract()
@@ -580,11 +568,11 @@
 #     start_urls = ['http://quotes.toscrape.com/tableful/']
 
 #     def parse(self, response):
-#         quoteData = QuoteData()
 #         quotes = response.xpath('//*[contains(@style,"border-bottom")]/*[contains(@style,"top")]/text()')
 #         tags = response.xpath('//*[contains(@style,"padding-bottom")]')
 
 #         for quote, tag in zip(quotes, tags):
+#             quoteData = QuoteData()
 #             quoteData['quote'] = quote.get().split(" Author: ")[0]
 #             quoteData['author'] = quote.get().split(" Author: ")[1]
 #             quoteData['tags'] = tag.css('a::text').getall()
@@ -673,7 +661,7 @@
 # 	tags = scrapy.Field()
 
 # class QuoteDataSpider(scrapy.Spider):
-# 	name = "quotes"
+# 	name = "main"
 
 # 	start_urls = ['http://quotes.toscrape.com/login']
 
@@ -682,10 +670,10 @@
 		
 # 	def after_login(self, response):
 
-# 		quoteData = QuoteData()
 # 		quoteBlocks = response.css('div.quote')
 
 # 		for block in quoteBlocks:
+# 			quoteData = QuoteData()
 # 			quoteData['quote'] = block.css('span.text::text').extract_first()
 # 			quoteData['author'] = block.css('span small::text').extract_first()
 # 			quoteData['tags'] = block.css('div.tags a.tag::text').extract()
@@ -745,9 +733,9 @@
 
 #         data_dict = response.json()
 #         quotes = data_dict.get('quotes')
-#         quote_data = QuoteData()
 
 #         for quote in quotes:
+#             quote_data = QuoteData()
 #             quote_data['author_name'] = quote.get('author').get('name')
 #             quote_data['tags'] = ';'.join(quote.get('tags'))
 #             quote_data['text'] = quote.get('text')
@@ -792,6 +780,7 @@
 #             yield response.follow(next_page, callback=self.parse)
 
 #? === 2° Primeira resolução ===
+
 # import scrapy
 # import chompjs
 
@@ -808,9 +797,9 @@
 #     def parse(self, response):
 #         script_text = response.xpath('//script[contains(text(), "var data")]//text()').get()
 #         list_of_dicts = chompjs.parse_js_object(script_text)
-#         quote_data = QuoteData()
 
 #         for item in list_of_dicts:
+#             quote_data = QuoteData()
 #             quote_data['tags'] = ';'.join(item.get('tags'))
 #             quote_data['author_name'] = item.get('author').get('name')
 #             quote_data['text'] = item.get('text')
@@ -827,45 +816,45 @@
 #versão simplificada
 # https://www.youtube.com/watch?v=dKAKVVciU5M&t=816s
 
-#? === 2° Segunda resolução ===
-import scrapy
-import json
-import re
-from scrapy_splash import SplashRequest
+# #? === 2° Segunda resolução ===
+# import scrapy
+# import json
+# import re
+# from scrapy_splash import SplashRequest
 
-class QuoteData(scrapy.Item):
-	quote = scrapy.Field()
-	author = scrapy.Field()
-	tags = scrapy.Field()
+# class QuoteData(scrapy.Item):
+# 	quote = scrapy.Field()
+# 	author = scrapy.Field()
+# 	tags = scrapy.Field()
 
-class QuoteDataSpider(scrapy.Spider):
-	name = "main"
+# class QuoteDataSpider(scrapy.Spider):
+# 	name = "main"
 
-	start_urls = ['http://quotes.toscrape.com/js/page/1/']
+# 	start_urls = ['http://quotes.toscrape.com/js/page/1/']
 
-	def start_requests(self):
-		for url in self.start_urls:
-			yield SplashRequest(url, self.parse, endpoint='render.html',args={'wait': 0.5},)
+# 	def start_requests(self):
+# 		for url in self.start_urls:
+# 			yield SplashRequest(url, self.parse, endpoint='render.html',args={'wait': 0.5},)
 
-	def parse(self, response):
+# 	def parse(self, response):
 
-		quoteData = QuoteData()
-		data = re.findall("var data =(.+?);\n", response.body.decode("utf-8"), re.S)
+# 		data = re.findall("var data =(.+?);\n", response.body.decode("utf-8"), re.S)
 
-		dataJSON = []
-		if data:
-			dataJSON = json.loads(data[0])
+# 		dataJSON = []
+# 		if data:
+# 			dataJSON = json.loads(data[0])
 
-		for item in dataJSON:
-			quoteData['quote'] = item.get('text')
-			quoteData['author'] = item.get('author', {}).get('name')
-			quoteData['tags'] = item.get('tags')
+# 		for item in dataJSON:
+# 			quoteData = QuoteData()
+# 			quoteData['quote'] = item.get('text')
+# 			quoteData['author'] = item.get('author', {}).get('name')
+# 			quoteData['tags'] = item.get('tags')
 
-			yield quoteData
+# 			yield quoteData
 
-		# follow pagination links
-		for a in response.css('li.next a'):
-			yield response.follow(a, callback=self.parse)
+# 		# follow pagination links
+# 		for a in response.css('li.next a'):
+# 			yield response.follow(a, callback=self.parse)
 
 #TODO === 7° - Conteúdo gerado por JavaScript com Delayed ===
 # AULA 24
@@ -919,9 +908,9 @@ class QuoteDataSpider(scrapy.Spider):
 #     def parse(self, response, **kwargs):
 #         text = response.xpath("//script[contains(text(), 'var data')]//text()").get()
 #         data_dict = chompjs.parse_js_object(text[text.index('var data'):])
-#         quote_data = QuoteData()
 
 #         for item in data_dict:
+#             quote_data = QuoteData()
 #             quote_data['tags'] = ';'.join(item.get('tags'))
 #             quote_data['author_name'] = item.get('author').get('name')
 #             quote_data['text'] = item.get('text')
@@ -991,7 +980,7 @@ class QuoteDataSpider(scrapy.Spider):
 # 	tags = scrapy.Field()
 
 # class QuoteDataSpider(scrapy.Spider):
-# 	name = "quotes"
+# 	name = "main"
 
 # 	start_urls = ['http://quotes.toscrape.com/search.aspx']
 
@@ -1004,10 +993,10 @@ class QuoteDataSpider(scrapy.Spider):
 # 			yield scrapy.FormRequest('http://quotes.toscrape.com/filter.aspx', formdata={'author': response.css('select#author > option[selected]::attr(value)').extract_first(), 'tag':tag, '__VIEWSTATE': response.css('input#__VIEWSTATE::attr(value)').extract_first()},callback=self.parse_results)
 
 # 	def parse_results(self, response):
-# 		quoteData = QuoteData()
+
 # 		for quote in response.css('div.quote'):
+# 			quoteData = QuoteData()
 # 			quoteData['quote'] = quote.css('span.content::text').extract_first()
 # 			quoteData['author'] = quote.css('span.author::text').extract_first()
 # 			quoteData['tags'] = quote.css('span.tag::text').extract_first()
 # 			yield quoteData
-
